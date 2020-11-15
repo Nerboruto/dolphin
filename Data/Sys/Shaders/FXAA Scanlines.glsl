@@ -18,7 +18,7 @@
 #define FXAA_REDUCE_MUL		(1.0 / 8.0)
 #define FXAA_SPAN_MAX		1.5
 
-#define SCAN_LINES		0.1 //scanline intensity
+#define SCAN_LINES		0.15 //scanline intensity
 
 float4 applyFXAA(float2 fragCoord)
 {
@@ -62,21 +62,21 @@ float4 applyFXAA(float2 fragCoord)
 		color = float4(rgbA, 1.0);
 	else
 		color = float4(rgbB, 1.0);
-	
-	float3 c1 = color.rgb;	
-	float3 c2;
-	
-	float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
-	float horzline = mod(Vpos, 2.0);
-	if (horzline == 0) c2 = float3(1.0, 1.0, 1.0);
-	else c2 = float3(0.0, 0.0, 0.0);
-	
-	color.rgb = lerp(c1.rgb, c1.rgb * c2.rgb * 2.0, SCAN_LINES);
-		
+
 	return color;
 }
 
 void main()
 {
-	SetOutput(applyFXAA(GetCoordinates() * GetResolution()));
+	// fxaa pass
+	float4 c1 = applyFXAA(GetCoordinates() * GetResolution());
+	// scanlines generator
+	float3 c2;
+	float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
+	float horzline = mod(Vpos, 2.0);
+	if (horzline == 0) c2.rgb = float3(2.0, 2.0, 2.0);
+	else c2.rgb = float3(0.0, 0.0, 0.0);
+	//merge scanlines
+	c1.rgb = lerp(c1.rgb, c1.rgb * c2.rgb, SCAN_LINES);
+	SetOutput(float4(c1));
 }
