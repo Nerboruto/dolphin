@@ -14,12 +14,52 @@
 
 //scanlines mod by Nerboruto
 
+/*
+[configuration]
+
+[OptionBool]
+GUIName = Sharp filter 
+OptionName = SHARP_ON
+DefaultValue = true
+
+[OptionRangeFloat]
+GUIName = Sharp Amount
+OptionName = SHARP_C
+MinValue = 0.50
+MaxValue = 1.50
+StepAmount = 0.10,
+DefaultValue = 0.50
+DependentOption = SHARP_ON
+
+[OptionBool]
+GUIName = Scanlines filter 
+OptionName = SCAN_ON
+DefaultValue = true
+
+[OptionRangeFloat]
+GUIName = Scanlines Intensity Amount
+OptionName = SCAN_LINES
+MinValue = 0.0
+MaxValue = 0.25
+StepAmount = 0.01,
+DefaultValue = 0.20
+DependentOption = SCAN_ON
+
+[OptionRangeFloat]
+GUIName = Scanlines White Amount
+OptionName = SCAN_W
+MinValue = 0.5
+MaxValue = 1.0
+StepAmount = 0.01,
+DefaultValue = 0.85
+DependentOption = SCAN_ON
+
+[/configuration]
+*/
+
 #define FXAA_REDUCE_MIN		(1.0/ 128.0)
 #define FXAA_REDUCE_MUL		(1.0 / 8.0)
 #define FXAA_SPAN_MAX		1.5
-
-#define SCAN_LINES		0.20 //scanline intensity
-
 #define C_LUMA float3(0.2126, 0.7152, 0.0722) //luma coefficient
 
 float4 applyFXAA(float2 fragCoord)
@@ -64,16 +104,19 @@ float4 applyFXAA(float2 fragCoord)
 		color = float4(rgbA, 1.0);
 	else
 		color = float4(rgbB, 1.0);
-	// sharp pass
-	float3 blur = rgbNW;
-	blur += rgbNE;
-	blur += rgbSW;
-	blur += rgbSE;
-	blur /= 4;
-	float3 sharp = color.rgb - blur;
-	float sharp_luma = dot(sharp, C_LUMA * 0.5);
-	sharp_luma = clamp(sharp_luma, -0.035, 0.035);
-	color = color + sharp_luma;	
+	if (SHARP_ON == 1)
+	{
+		// sharp pass
+		float3 blur = rgbNW;
+		blur += rgbNE;
+		blur += rgbSW;
+		blur += rgbSE;
+		blur /= 4;
+		float3 sharp = color.rgb - blur;
+		float sharp_luma = dot(sharp, C_LUMA * SHARP_C);
+		sharp_luma = clamp(sharp_luma, -0.035, 0.035);
+		color = color + sharp_luma;	
+	}	
 	return color;
 }
 
@@ -81,13 +124,16 @@ void main()
 {
 	// fxaa pass
 	float3 c1 = applyFXAA(GetCoordinates() * GetResolution()).rgb;
-	// scanlines generator
-	float3 c2;
-	float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
-	float horzline = mod(Vpos, 2.0);
-	if (horzline == 0.0) c2 = float3(0.85, 0.85, 0.85);
-	else c2 = float3(0.0, 0.0, 0.0);
-	//merge scanlines
-	c1 = lerp(c1, c1 * c2 * 2.0, SCAN_LINES);
+	if (SCAN_ON == 1)
+	{
+		// scanlines generator
+		float3 c2;
+		float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
+		float horzline = mod(Vpos, 2.0);
+		if (horzline == 0.0) c2 = float3(SCAN_W, SCAN_W, SCAN_W);
+		else c2 = float3(0.0, 0.0, 0.0);
+		//merge scanlines
+		c1 = lerp(c1, c1 * c2 * 2.0, SCAN_LINES);
+	}	
 	SetOutput(float4(c1, 0.0));
 }
