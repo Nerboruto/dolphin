@@ -18,7 +18,7 @@
 #define FXAA_REDUCE_MUL		(1.0 / 8.0)
 #define FXAA_SPAN_MAX		1.5
 
-#define SCAN_LINES		0.10 //scanline intensity
+#define SCAN_LINES		0.20 //scanline intensity
 
 #define C_LUMA float3(0.2126, 0.7152, 0.0722) //luma coefficient
 
@@ -64,6 +64,16 @@ float4 applyFXAA(float2 fragCoord)
 		color = float4(rgbA, 1.0);
 	else
 		color = float4(rgbB, 1.0);
+	// sharp pass
+	float3 blur = rgbNW;
+	blur += rgbNE;
+	blur += rgbSW;
+	blur += rgbSE;
+	blur /= 4;
+	float3 sharp = color.rgb - blur;
+	float sharp_luma = dot(sharp, C_LUMA * 0.5);
+	sharp_luma = clamp(sharp_luma, -0.035, 0.035);
+	color = color + sharp_luma;	
 	return color;
 }
 
@@ -71,21 +81,13 @@ void main()
 {
 	// fxaa pass
 	float3 c1 = applyFXAA(GetCoordinates() * GetResolution()).rgb;
-	// sharp pass
-	float3 blur = SampleLocation(GetCoordinates() + 0.75 / GetResolution()).rgb; // North West
-	blur += SampleLocation(GetCoordinates() - 0.75 / GetResolution()).rgb; // South East
-	blur /= 2;
-	float3 sharp = c1 - blur;
-	float sharp_luma = dot(sharp, C_LUMA * 0.5);
-	sharp_luma = clamp(sharp_luma, -0.035, 0.035);
-	c1 = c1 + sharp_luma;
 	// scanlines generator
 	float3 c2;
 	float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
 	float horzline = mod(Vpos, 2.0);
-	if (horzline == 0.0) c2 = float3(1.0, 1.0, 1.0);
+	if (horzline == 0.0) c2 = float3(0.85, 0.85, 0.85);
 	else c2 = float3(0.0, 0.0, 0.0);
 	//merge scanlines
 	c1 = lerp(c1, c1 * c2 * 2.0, SCAN_LINES);
-	SetOutput(float4(c1,0.0));
+	SetOutput(float4(c1, 0.0));
 }

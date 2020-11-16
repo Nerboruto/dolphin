@@ -18,7 +18,7 @@
 #define FXAA_REDUCE_MUL		(1.0 / 8.0)
 #define FXAA_SPAN_MAX		1.5
 
-#define SCAN_LINES		0.10 //scanline intensity
+#define SCAN_LINES		0.20 //scanline intensity
 
 float4 applyFXAA(float2 fragCoord)
 {
@@ -73,7 +73,7 @@ void main()
 	float3 c2;
 	float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
 	float horzline = mod(Vpos, 2.0);
-	if (horzline == 0.0) c2 = float3(1.0, 1.0, 1.0);
+	if (horzline == 0.0) c2 = float3(0.85, 0.85, 0.85);
 	else c2 = float3(0.0, 0.0, 0.0);
 	//merge scanlines
 	c1 = lerp(c1, c1 * c2 * 2.0, SCAN_LINES);
