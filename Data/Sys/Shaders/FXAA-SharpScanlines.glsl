@@ -3,6 +3,8 @@
 
 // Copyright (C) 2013 mudlord
 
+// Scanlines mod by Nerboruto
+
 // Everyone is permitted to copy and distribute verbatim or modified
 // copies of this license document, and changing it is allowed as long
 // as the name is changed.
@@ -12,13 +14,11 @@
 
 // 0. You just DO WHAT THE FUCK YOU WANT TO.
 
-//scanlines mod by Nerboruto
-
 /*
 [configuration]
 
 [OptionBool]
-GUIName = Sharp filter 
+GUIName = Sharp filter Active
 OptionName = SHARP_ON
 DefaultValue = true
 
@@ -27,30 +27,36 @@ GUIName = Sharp Amount
 OptionName = SHARP_C
 MinValue = 0.50
 MaxValue = 1.50
-StepAmount = 0.10,
+StepAmount = 0.10
 DefaultValue = 0.50
 DependentOption = SHARP_ON
 
 [OptionBool]
-GUIName = Scanlines filter 
+GUIName = Scanlines filter Active
 OptionName = SCAN_ON
 DefaultValue = true
 
-[OptionRangeFloat]
-GUIName = Scanlines Intensity Amount
-OptionName = SCAN_LINES
-MinValue = 0.0
-MaxValue = 0.25
-StepAmount = 0.01,
-DefaultValue = 0.20
+[OptionBool]
+GUIName = DoubleScanline
+OptionName = SCAN_D
+DefaultValue = false
 DependentOption = SCAN_ON
 
 [OptionRangeFloat]
-GUIName = Scanlines White Amount
+GUIName = Scanlines Amount
+OptionName = SCAN_LINES
+MinValue = 0.1
+MaxValue = 0.3
+StepAmount = 0.01
+DefaultValue = 0.2
+DependentOption = SCAN_ON
+
+[OptionRangeFloat]
+GUIName = White Amount
 OptionName = SCAN_W
 MinValue = 0.5
 MaxValue = 1.0
-StepAmount = 0.01,
+StepAmount = 0.01
 DefaultValue = 0.85
 DependentOption = SCAN_ON
 
@@ -106,12 +112,11 @@ float4 applyFXAA(float2 fragCoord)
 		color = float4(rgbB, 1.0);
 	if (SHARP_ON == 1)
 	{
-		// sharp pass
 		float3 blur = rgbNW;
 		blur += rgbNE;
 		blur += rgbSW;
 		blur += rgbSE;
-		blur /= 4;
+		blur *= 0.25;
 		float3 sharp = color.rgb - blur;
 		float sharp_luma = dot(sharp, C_LUMA * SHARP_C);
 		sharp_luma = clamp(sharp_luma, -0.035, 0.035);
@@ -126,13 +131,13 @@ void main()
 	float3 c1 = applyFXAA(GetCoordinates() * GetResolution()).rgb;
 	if (SCAN_ON == 1)
 	{
-		// scanlines generator
 		float3 c2;
+		float horzline;
 		float Vpos = floor(GetCoordinates().y * GetWindowResolution().y);
-		float horzline = mod(Vpos, 2.0);
+		if (SCAN_D == 1.0) horzline = mod(Vpos, 1.5);
+		else horzline = mod(Vpos, 2.0);
 		if (horzline == 0.0) c2 = float3(SCAN_W, SCAN_W, SCAN_W);
 		else c2 = float3(0.0, 0.0, 0.0);
-		//merge scanlines
 		c1 = lerp(c1, c1 * c2 * 2.0, SCAN_LINES);
 	}	
 	SetOutput(float4(c1, 0.0));
