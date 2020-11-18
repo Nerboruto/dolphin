@@ -65,12 +65,12 @@ DependentOption = SCAN_ON
 
 #define FXAA_REDUCE_MIN		(1.0/ 128.0)
 #define FXAA_REDUCE_MUL		(1.0 / 8.0)
-#define FXAA_SPAN_MAX		1.5
 #define C_LUMA float3(0.2126, 0.7152, 0.0722) //luma coefficient
 
 float4 applyFXAA(float2 fragCoord)
 {
 	float4 color;
+	float FXAA_SPAN_MAX=1.5*(GetResolution().x/640);
 	float2 inverseVP = GetInvResolution();
 	float3 rgbNW = SampleLocation((fragCoord + float2(-1.0, -1.0)) * inverseVP).xyz;
 	float3 rgbNE = SampleLocation((fragCoord + float2(1.0, -1.0)) * inverseVP).xyz;
