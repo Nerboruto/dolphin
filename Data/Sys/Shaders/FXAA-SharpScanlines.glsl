@@ -1,3 +1,6 @@
+// scanlines shader by Nerboruto 2020
+//
+// fxaa Copyright (C) 2013 mudlord
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy 
 // of this software and associated documentation files (the "Software"), to deal
